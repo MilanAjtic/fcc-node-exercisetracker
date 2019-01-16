@@ -98,24 +98,6 @@ app.get('/api/exercise/log', (req, res) => {
     })
     .select("description duration date")
     .then(exercises => {
-      // res.json(
-      //   exercises.length !== 0 
-      //   ? {
-      //     _id: exercises[0].user._id,
-      //     username: exercises[0].user.username,
-      //     count: exercises.length,
-      //     from: req.query.from,
-      //     to: req.query.to,
-      //     log: exercises.map((e) => {
-      //       return {
-      //         description: e.description,
-      //         duration: e.duration,
-      //         date: e.date
-      //       }
-      //     })
-      //   } 
-      //   : {}
-      //   )
       const obj = {
         _id: req.query.userId,
         count: exercises.length,
