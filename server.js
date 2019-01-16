@@ -54,7 +54,7 @@ app.post('/api/exercise/add', (req, res) => {
   const newExercise = {
     description: req.body.description,
     duration: req.body.duration,
-    date: req.body.date ? req.body.date : Date.now()
+    date: req.body.date ? new Date(req.body.date).toDateString() : new Date(Date.now()).toDateString()
   }
   User
   .findOne({_id: req.body.userId})
@@ -62,8 +62,30 @@ app.post('/api/exercise/add', (req, res) => {
     user.exercise.push(newExercise)
     user.save()
     .then(user => {
-      res.json(user)
+      res.json({
+        _id: req.body.userId,
+        username: user.username,
+        description: req.body.description,
+        duration: req.body.duration,
+        date: req.body.date ? new Date(req.body.date).toDateString() : new Date(Date.now()).toDateString()
+      })
     })
+  })
+})
+
+app.get('/api/exercise/log', (req, res) => {
+  // const options = {
+  //   from: req.query.from,
+  //   to: req.query.to,
+  //   count: req.query.limit
+  // }
+  User
+  .find({_id: req.query.userId}, {"exercise.date": {"$gte": req.query.from, "$lt": req.query.to}})
+  // .find({"exercise.date": {"$gte": req.query.from, "$lt": req.query.to}})
+  // .limit({exercise: req.query.limit})
+  // .select("_id username exercise.description exercise.duration exercise.date")
+  .then(user => {
+    res.json(user)
   })
 })
 
