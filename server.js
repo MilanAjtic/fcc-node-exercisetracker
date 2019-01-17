@@ -15,8 +15,8 @@ mongoose.connect(process.env.MONGO_URI, {
 }).catch(err => console.log(err))  
 
 require('./Schemas')
-const User = mongoose.model('User')
-const Exercise = mongoose.model('Exercise')
+const User2 = mongoose.model('User2')
+const Exercise2 = mongoose.model('Exercise2')
 
 app.use(cors())
 
@@ -35,7 +35,7 @@ app.post('/api/exercise/new-user', (req, res) => {
   const newUser = {
     username: req.body.username,
   }
-  new User(newUser)
+  new User2(newUser)
     .save()
     .then(user => {
       res.json({
@@ -47,7 +47,7 @@ app.post('/api/exercise/new-user', (req, res) => {
 
 // Task 2
 app.get('/api/exercise/users', (req, res) => {
-  User
+  User2
     .find({})
     .select("username")
     .then(user => {
@@ -63,13 +63,12 @@ app.post('/api/exercise/add', (req, res) => {
     duration: req.body.duration,
     date: req.body.date ? new Date(req.body.date).toDateString() : new Date(Date.now()).toDateString()
   }
-  new Exercise(exercise)
+  new Exercise2(exercise)
   .save()
   .then(e => {
-    User
-      .findOneAndUpdate(
-        {_id: req.body.userId},
-        {$push: {exercises: e}}
+    User2
+      .findOne(
+        {_id: req.body.userId}
       )
       .exec()
       .then(u => {
@@ -83,13 +82,6 @@ app.post('/api/exercise/add', (req, res) => {
     })
   })
 })
-
-// Prethodni task (br. 3) je primer kako moze da se uradi query bez da se radi populate()
-
-// Doda se novi Exercise, onda se na osnovu userId-a (koji je unesen u formi), pronadje medju Users taj koji nam treba, i uzmemo njegov username
-
-// U ovom slucaju nije neophodno da se svaki novi Exercise push-uje kod User-a, ali je ok da bi baza bila konzistentna
-
 
 
 // Tasks 4 and 5
@@ -111,48 +103,42 @@ app.get('/api/exercise/log', (req, res) => {
     date["$lt"] = req.query.to
     obj.date = date
   }
-  Exercise
+  Exercise2
     .find(obj)
     .limit(parseInt(req.query.limit))
-    .populate({
-      path: 'user',
-      select: 'username'
-    })
     .select("description duration date")
     .then(exercises => {
-      const obj = {
-        _id: req.query.userId,
-        count: exercises.length,
-        from: req.query.from,
-        to: req.query.to,
-        log: []
-      }
-      res.json(
-        exercises.length != 0 
-        ? {
-          ...obj,
-          username: exercises[0].user.username,
-          log: exercises.map((e) => {
-            return {
-              description: e.description,
-              duration: e.duration,
-              date: e.date
-            }
-          })
-        } 
-        : obj
+      User2
+      .findOne(
+        {_id: req.query.userId}
+      )
+      .exec()
+      .then(u => {
+        const obj = {
+          _id: req.query.userId,
+          count: exercises.length,
+          from: req.query.from,
+          to: req.query.to,
+          log: []
+        }
+        res.json(
+          exercises.length != 0 
+          ? {
+            ...obj,
+            username: u.username,
+            log: exercises.map((e) => {
+              return {
+                description: e.description,
+                duration: e.duration,
+                date: e.date
+              }
+            })
+          } 
+          : obj
         )
+      })
     }).catch(err => console.error(err))
 })
-
-// Prethodni taskovi (br. 4 i 5) su primer kako moze da se uradi query pomocu populate()
-
-// Trazimo Exercises koji zadovoljavaju zadate parametre, onda uradimo populate() i u atribut user unesemo ceo sadrzaj odredjenog User-a sa kojim su nase Exercises povezane (preko userId-a)
-
-// Nama je bio potreban samo username, tako da nije bilo neophodno da se radi preko populate(), vec smo mogli kao i u tasku 3, da uradimo User.find() i tako nadjemo User-a koji ima zadati userId, uzmemo njegov _id, i stavimo ga u response zajedno sa nizom Exercises koje smo vec pre toga nasli
-
-// Ceo zadatak je mogao da se uradi bez refs, pomocu dve nezavisne sheme User i Exercise, bilo bi dovoljno samo da se u ExerciseSchema nalazi atribut user koji bi sadrzao _id odredjenog User-a
-
 
 
 // za glitch mora da bude process.env.PORT ili 3000
