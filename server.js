@@ -86,11 +86,25 @@ app.post('/api/exercise/add', (req, res) => {
 
 // Tasks 4 and 5
 app.get('/api/exercise/log', (req, res) => {
+  const obj = {
+    user: req.query.userId,
+  }
+  let date = {}
+  if (req.query.from && req.query.to) {
+    date["$gt"] = req.query.from
+    date["$lt"] = req.query.to
+    obj.date = date
+  } 
+  else if (req.query.from) {
+    date["$gt"] = req.query.from
+    obj.date = date
+  }
+  else if (req.query.to) {
+    date["$lt"] = req.query.to
+    obj.date = date
+  }
   Exercise
-    .find({
-      user: req.query.userId,
-      date: {"$gt": req.query.from, "$lt": req.query.to}
-    })
+    .find(obj)
     .limit(parseInt(req.query.limit))
     .populate({
       path: 'user',
@@ -106,7 +120,7 @@ app.get('/api/exercise/log', (req, res) => {
         log: []
       }
       res.json(
-        exercises.length !== 0 
+        exercises.length != 0 
         ? {
           ...obj,
           username: exercises[0].user.username,
